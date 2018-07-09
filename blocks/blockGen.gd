@@ -6,6 +6,7 @@ var deathLimit = 3
 var birthLimit = 4
 
 var entSize = 1
+var entCap = 8
 var fillCut = 10
 
 
@@ -14,60 +15,52 @@ const diagDirs = [Vector2(1,1), Vector2(-1,1),Vector2(-1,-1),Vector2(1,-1)]
 
 const dirNames = ["n", "s", "e", "w"]
 
-export var randomSeed = false
-export var setSeed = 224124172
+#var randomSeed = true
+var setSeed = 224124172
 
 
 var fillPercentage = 40
 
 var map = []
 
-var pathLabel
-var seedLabel
-var fillLabel
-
 var entrances
+var validEnts = { "n" : [], "e" : [], "s" : [], "w": []}
 
+var mainEnt
+var paths = []
 
 
 func _ready():
-	
-	
-	
-	pathLabel = get_node("Paths")
-	seedLabel = get_node("Seed")
-	fillLabel = get_node("Fill")
-	
-	set_process_input(true)
 	for x in width :
 		map.append([])
 		for y in height:
 			map[x].append(-1)
 	_generate_map()
 	
-	
-	var time = OS.get_ticks_msec()
-	
-#	_consolidate_entrances()
-	
-	print(OS.get_ticks_msec()-time)
-	
-	_draw_map()
+
+
 
 func _consolidate_entrances():
 	for d in dirNames :
 		var dir = entrances[d]
 		
 		for ent in dir :
+#			if ent.size() == 1 :
+#				map[ent[0].x][ent[0].y] = 1
 			var fill = _find_fill(ent[0])
 			if fill.size() < fillCut + ent.size() :
 				for cell in fill :
 					map[cell.x][cell.y] = 0
-		
-#		if dir.size() > 1 : 
-#			if _has_path(dir[0], dir[-1]) :
-#					dir[0] += dir.pop_back()
 	entrances = _find_entrances()
+
+func _find_paths():
+	
+	for dir in dirNames :
+		validEnts[dir].clear()
+		for ent in entrances[dir] :
+			if _has_path(mainEnt, ent) :
+				validEnts[dir].append(ent)
+	
 
 func _find_fill(node):
 	var q = []
@@ -87,25 +80,6 @@ func _find_fill(node):
 	
 	return visited
 
-func _find_paths():
-	
-	var paths = { "ns" : false, "ne" : false, "nw" : false, "ew" : false, "sw" : false, "se" : false} 
-	
-	for ents in entrances["n"] :
-		for ent  in ents :
-			pass 
-
-func _input(event):
-	if event.is_action_pressed("ui_accept"):
-		print("smooth")
-		_smooth_map()
-	if event.is_action_pressed("ui_cancel"):
-		print("regen")
-		_generate_map()
-	if event.is_action_pressed("ui_select"):
-		_show_ents()
-		_draw_map()
-
 func _generate_map():
 	clear()
 	var time = OS.get_ticks_msec()
@@ -116,20 +90,21 @@ func _generate_map():
 		_clean_strays()
 	
 	entrances = _find_entrances()
-	print(entrances)
 	_consolidate_entrances()
+#	print(entrances)
 	
-	time = OS.get_ticks_msec()-time
-	print("Time to generate : " , time)
-	print("Seed : ", setSeed)
-	
-	fillLabel.text = String(float(_raw_fill())/float(height*width)*100) + "%"
-	
-	
-	pathLabel.text = "Paths : " + String(entrances["count"])
+#	time = OS.get_ticks_msec()-time
+#	print("Time to generate : " , time)
+#	print("Seed : ", setSeed)
+#
+#	fillLabel.text = String(float(_raw_fill())/float(height*width)*100) + "%"
+#
+#
+#	pathLabel.text = "Paths : " + String(entrances["count"])
 
 func _draw_map():
 	var time = OS.get_ticks_msec()
+	
 	
 	var x = 0
 	var y = 0
@@ -140,10 +115,10 @@ func _draw_map():
 			y += 1
 		y = 0
 		x += 1
-	time = OS.get_ticks_msec()-time
-	print("Time to draw : ", time)
-	print("Time per block : ", time/(height*width))
-	print("Timer per drawn block ", time/_raw_fill())
+#	time = OS.get_ticks_msec()-time
+#	print("Time to draw : ", time)
+#	print("Time per block : ", time/(height*width))
+#	print("Timer per drawn block ", time/_raw_fill())
 
 func _clean_strays():
 	var copy = map
@@ -172,29 +147,30 @@ func _get_surrounding_wall_count(xLoc, yLoc):
 	for neighbor in neighbors :
 		if map[neighbor.x][neighbor.y] >= 0:
 			wallCount += 1
-#
-#	var x = xLoc -1
-#	while x <= xLoc+1 :
-#		var y = yLoc - 1
-#		while y <= yLoc+1 :
-#			if x > -1 && y > -1 && x < width && y < height :
-#				if map[x][y] >= 0 and !(x == xLoc and y == yLoc) :
-#					wallCount += 1 - map[x][y]
-#			else: 
-#				wallCount += 1
-#			y += 1
-#		x += 1
 	
 	return wallCount
 
+func _copy_map(input) :
+	
+	var copy = [] 
+	
+	for x in width :
+		copy.append([])
+		for y in height:
+			copy[x].append(map[x][y])
+	
+	return copy
+	
+
+
 func _smooth_map():
-	var x = 0
-	var y = 0
+	var x = width-1
+	var y = height-1
 	
-	var copy = map
+	var copy = _copy_map(map)
 	
-	while x < width-1:
-		while y < height-1:
+	while x > -1:
+		while y > -1:
 			if map[x][y] != 1 :
 				var neighborTiles = _get_surrounding_wall_count(x,y)
 				
@@ -203,30 +179,17 @@ func _smooth_map():
 						copy[x][y] = -1
 				elif map[x][y] == -1:
 					if neighborTiles > birthLimit:
-						map[x][y] = 0
-				
-#				if neighborTiles == 3 :
-#					copy[x][y] = 0
-#				elif neighborTiles < 2 || neighborTiles > 3 :
-#					copy[x][y] = -1
-			y += 1
-		y = 0
-		x += 1
+							copy[x][y] = 0
+			y -= 1
+		y = height-1
+		x -= 1
 	map = copy
 
 func _random_fill_map():
 	
-	randomize()
-	
-	if randomSeed :
-		setSeed = randi()
-	seed(setSeed)
-	seedLabel.text = "Seed: " + String(setSeed)
 	
 	for x in width:
 		for y in height:
-			#if y == height-1 || y == 0 || x == width-1 || x == 0 :
-			#	map[x][y] = 1
 			if rand_range(0,100) < fillPercentage :
 				map[x][y] = 0
 			else :
@@ -243,7 +206,7 @@ func _find_entrances():
 	
 	while y < height:
 #		if map[0][y] == -1 && (_get_neighbors_value(Vector2(0,y)).count(-1) > 1 || ent1.size() > entSize) :
-		if map[0][y] == -1 : 
+		if map[0][y] == -1 :
 			ent1.push_back(Vector2(0,y))
 		else :
 			if ent1.size() < entSize :
@@ -306,7 +269,7 @@ func _find_entrances():
 
 func _show_ents():
 	for dirs in dirNames :
-		for ents in entrances[dirs] :
+		for ents in validEnts[dirs] :
 			for ent in ents :
 				if map[ent.x][ent.y] == -1 :
 					map[ent.x][ent.y] = 1
@@ -345,7 +308,7 @@ func _has_path(starts, ends):
 				if ends.has(next) :
 					return true
 				if !visited.has(next) && map[next.x][next.y] == -1 :
-					if next.y +1 > height :
+					if next.y +1 < height :
 						if map[next.x][next.y+1] == -1 :
 							q.push_front(next)
 							visited[next] = true
@@ -362,3 +325,23 @@ func _raw_fill():
 			if y >= 0 :
 				count += 1
 	return count
+
+func _test_maps() :
+	var dirCount = {"n": 0,"s" :0,"e":0,"w":0, "paths":0}
+	
+	for x in 100 :
+		_generate_map()
+		for dir in dirNames :
+			if entrances[dir].size() != 0 :
+				if mainEnt == [] :
+					mainEnt = entrances[dir][0]
+					_find_paths()
+					var count = 0
+					for dir2 in dirNames :
+						if validEnts[dir2].size() > 2 && dir != dir2 :
+							count += 1
+					dirCount["paths"] += count
+				dirCount[dir] += 1
+		mainEnt = []
+	print(dirCount)
+	
