@@ -84,6 +84,7 @@ func _match_ents(ents, face, ents2):
 				for block2 in ent2:
 					if block*mod == block2*mod :
 						matching += 1
+						#fix so tiles must be matching 
 					if matching >= abs(ent2.size() - ent.size()) + 2 :
 						return ent2
 	return []
@@ -117,8 +118,8 @@ func _add_block(curr, face, fullMatching = false) :
 				var count = 0
 				if neighbors.size() > 0 && fullMatching :
 					for dir in cardinal :
-						if neighbors.has(dir) and neighbors[dir].validEnts[matchingCardinal[dir]].size() > 0 :
-							if _match_ents(neighbors[dir].validEnts[matchingCardinal[dir]], dir, nextBlock.validEnts[face]).size() > 0 :
+						if neighbors.has(dir) and neighbors[dir].entrances[matchingCardinal[dir]].size() > 0 :
+							if _match_ents(neighbors[dir].entrances[matchingCardinal[dir]], dir, nextBlock.validEnts[face]).size() > 0 :
 								count += 1
 						else :
 							count += 1
