@@ -10,7 +10,7 @@ config_version=4
 
 [application]
 
-config/name="New Game Project"
+config/name="pcgTesting"
 run/main_scene="res://PcgMap.tscn"
 config/icon="res://icon.png"
 
