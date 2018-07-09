@@ -55,11 +55,16 @@ func _ready():
 
 func _input(event):
 	
+	if event.is_action_pressed("ui_up"):
+		if !blocksToFill.empty():
+			blocksToFill[0].modulate = Color(1.0,0.0,1.0)
+	
 	if event.is_action_pressed("ui_accept") :
 		var time  = OS.get_ticks_msec()
 		if !blocksToFill.empty() :
 			print(blocksToFill)
 			print("fillingNext")
+			blocksToFill[0].modulate = Color(1.0,1.0,1.0)
 			_fill_block(blocksToFill.pop_front())
 			print("filled")
 		print( blockGrid.size(), " blocks in : ", OS.get_ticks_msec()-time )
@@ -88,9 +93,9 @@ func _fill_block(block) :
 	
 	for dir in cardinal :
 		if block.validEnts[dir].size() > 0 :
-			_add_block(block, dir)
+			_add_block(block, dir, true)
 
-func _add_block(curr, face) :
+func _add_block(curr, face, fullMatching = false) :
 
 	nextBlock = block.instance()
 	nextBlock.position += curr.position+cardinal[face]*size
@@ -102,15 +107,37 @@ func _add_block(curr, face) :
 	
 	var time = OS.get_ticks_msec()
 	while true :
-#		print("searching")
 		if nextBlock.entrances[matchingCardinal[face]].size() > 0 :
 			var valid = _match_ents(curr.validEnts[face], face, nextBlock.entrances[matchingCardinal[face]])
 			if valid.size() > 1 :
 				nextBlock.mainEnt = valid
 				nextBlock._find_paths()
+				
+				var neighbors = _get_neighbors(nextBlock, matchingCardinal[face])
+				var count = 0
+				if neighbors.size() > 0 && fullMatching :
+					for dir in cardinal :
+						if neighbors.has(dir) and neighbors[dir].validEnts[matchingCardinal[dir]].size() > 0 :
+							if _match_ents(neighbors[dir].validEnts[matchingCardinal[dir]], dir, nextBlock.validEnts[face]).size() > 0 :
+								count += 1
+						else :
+							count += 1
+					if count < 4 :
+						nextBlock._generate_map()
+						continue
 				blockGrid[nextBlock.position] = nextBlock
 				blocksToFill.push_back(nextBlock)
 				nextBlock._draw_map()
 				return true
 		nextBlock._generate_map()
 
+func _get_neighbors(block, excludeFace = ""):
+	
+	var out = {}
+	
+	for dir in cardinal :
+		var next  = block.position + cardinal[dir]*size
+		if dir != excludeFace && blockGrid.has(next) :
+			out[dir] = blockGrid[next]
+	
+	return out
