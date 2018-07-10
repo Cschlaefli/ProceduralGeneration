@@ -71,7 +71,7 @@ func _input(event):
 
 
 
-func _match_ents(ents, face, ents2):
+func _match_ents(ents, face, ents2, loose = false):
 	
 	var matching = 0
 	
@@ -82,10 +82,15 @@ func _match_ents(ents, face, ents2):
 			matching = 0
 			for block in ent :
 				for block2 in ent2:
+					if abs(ent2.size() - ent.size()) > 4 && !loose :
+						continue
 					if block*mod == block2*mod :
 						matching += 1
-						#fix so tiles must be matching 
-					if matching >= abs(ent2.size() - ent.size()) + 2 :
+					if (ent2.size() <= 2 || ent.size() <= 2) && matching >= 2 : 
+						return ent2
+					if matching >= ent2.size()/2 if ent2.size() > ent.size() else ent.size()/2 :
+						return ent2
+					if loose && matching >= 2:
 						return ent2
 	return []
 	
@@ -105,22 +110,28 @@ func _add_block(curr, face, fullMatching = false) :
 	if blockGrid.has(nextBlock.position) :
 		nextBlock.free()
 		return false
-	
+	var genAttempts = 0
 	var time = OS.get_ticks_msec()
 	while true :
+		genAttempts += 1
 		if nextBlock.entrances[matchingCardinal[face]].size() > 0 :
 			var valid = _match_ents(curr.validEnts[face], face, nextBlock.entrances[matchingCardinal[face]])
 			if valid.size() > 1 :
 				nextBlock.mainEnt = valid
 				nextBlock._find_paths()
-				
+				print("attempts", genAttempts)
 				var neighbors = _get_neighbors(nextBlock, matchingCardinal[face])
 				var count = 0
-				if neighbors.size() > 0 && fullMatching :
+				if !neighbors.empty() && fullMatching :
 					for dir in cardinal :
 						if neighbors.has(dir) and neighbors[dir].entrances[matchingCardinal[dir]].size() > 0 :
-							if _match_ents(neighbors[dir].entrances[matchingCardinal[dir]], dir, nextBlock.validEnts[face]).size() > 0 :
+							var valids = _match_ents(neighbors[dir].entrances[matchingCardinal[dir]], dir, nextBlock.validEnts[dir])
+							if valids.size() > 0 :
 								count += 1
+							else :
+								print( neighbors[dir].entrances[matchingCardinal[dir]] ) 
+								print( nextBlock.entrances[dir] )
+								print( "failed")
 						else :
 							count += 1
 					if count < 4 :
@@ -140,5 +151,7 @@ func _get_neighbors(block, excludeFace = ""):
 		var next  = block.position + cardinal[dir]*size
 		if dir != excludeFace && blockGrid.has(next) :
 			out[dir] = blockGrid[next]
+	
+#	print(out)
 	
 	return out

@@ -10,6 +10,8 @@ var entCap = 8
 var fillCut = 10
 
 
+var corners = [Vector2(0,0), Vector2(width-1,0), Vector2(width-1, height-1), Vector2(0, height-1)]
+
 const cardinalDirs = [Vector2(0,1), Vector2(1,0), Vector2(-1,0), Vector2(0,-1)]
 const diagDirs = [Vector2(1,1), Vector2(-1,1),Vector2(-1,-1),Vector2(1,-1)]
 
@@ -45,13 +47,34 @@ func _consolidate_entrances():
 		var dir = entrances[d]
 		
 		for ent in dir :
-#			if ent.size() == 1 :
-#				map[ent[0].x][ent[0].y] = 1
 			var fill = _find_fill(ent[0])
 			if fill.size() < fillCut + ent.size() :
 				for cell in fill :
 					map[cell.x][cell.y] = 0
+	
+	for corner in corners :
+		var cell = map[corner.x][corner.y]
+		if cell == -1 :
+			
+			var neighbors = _get_neighbors(corner, true)
+			for n in neighbors :
+				if map[n.x][n.y] == 0 :
+					cell = -1
+					break
+	
 	entrances = _find_entrances()
+	
+	for d in dirNames :
+		var dir = entrances[d]
+		
+		if dir.size() > 0 :
+			for x in range(1, dir.size()-1) :
+				if _has_path(dir[0], dir[x]) :
+					for block in dir[x] :
+						dir[0].append(block)
+					entrances[d].remove(x)
+	
+	
 
 func _find_paths():
 	
