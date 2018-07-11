@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://mapGen.gd" type="Script" id=1]
+[ext_resource path="res://blockTests.gd" type="Script" id=1]
 [ext_resource path="res://Camera2DScrolling.tscn" type="PackedScene" id=2]
 
-[node name="PcgMap" type="Node"]
+[node name="blockTests" type="Node" index="0"]
 script = ExtResource( 1 )
 blockSize = Vector2( 20, 20 )
 cellSize = Vector2( 32, 32 )
