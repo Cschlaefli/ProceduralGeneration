@@ -2,15 +2,14 @@ extends TileMap
 
 const GEN = preload("res://bin/test.gdns")
 var generator
+var alternate = false
 
 var width = 20
 var height = 20
 
 
-
 var smoothCount = 8
 var strayCount = 2
-var reSmooth = 0
 
 var deathLimit = 3
 var birthLimit = 4
@@ -48,10 +47,10 @@ var paths = []
 func _init():
 	generator = GEN.new()
 	pass
-
-func _ready():
-	_generate_map()
-	_draw_map()
+#
+#func _ready():
+#	_generate_map()
+#	_draw_map()
 
 func _consolidate_entrances():
 	
@@ -119,8 +118,10 @@ func _generate_map():
 	var time = OS.get_ticks_msec()
 	
 	_random_fill_map()
-	map = generator.get_map(map, [])
-	
+	if( alternate ):
+		map = generator.get_alt_map(map)
+	else :
+		map = generator.get_map(map)
 #	print("Smooth time : ", OS.get_ticks_msec()-time)
 	for x in strayCount :
 		_clean_strays()

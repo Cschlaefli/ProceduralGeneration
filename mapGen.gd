@@ -41,7 +41,7 @@ func _ready():
 
 func _add_start_block():
 	
-	var startBlock = _gen_block( 8, 40, 4, false, Vector2(0,0))
+	var startBlock = _gen_block( 40, Vector2(0,0))
 	
 	var time = OS.get_ticks_msec()
 	
@@ -142,30 +142,24 @@ func _fill_block(block, valid = true) :
 		if block.validEnts[dir].size() > 0 :
 			_add_block(block, dir, true)
 
-func _gen_block( smooth, fill, birth, extended, pos ) :
+func _gen_block(fill, pos, alt = false ) :
 	
 	var nextBlock = block.instance()
-	nextBlock.height = blockSize.y
-	nextBlock.width = blockSize.x
 	nextBlock.position = pos
-	nextBlock.smoothCount = smooth
 	nextBlock.fillPercentage = fill
-	nextBlock.birthLimit = birth
-	nextBlock.extendedCheck = extended
+	nextBlock.alternate = alt
 	nextBlock._generate_map()
 	
 	return nextBlock
-	
+
 
 
 func _add_block(curr, face, fullMatching = false) :
-	
 	
 	var pos = curr.position+cardinal[face]*size
 	
 	if blockGrid.has(pos) :
 		return true
-	
 	
 	var noEntSide = []
 	
@@ -183,11 +177,10 @@ func _add_block(curr, face, fullMatching = false) :
 	
 	var nextBlock
 	
-	nextBlock = _gen_block( 8, 40, 4, false, pos)
-#	if noEntSide.size() > 0 :
-#		nextBlock = _gen_block( 8, 40, 4, false, pos)
-#	else :
-#		nextBlock = _gen_block( 2, 15, 8, true, pos)
+	if noEntSide.size() > 0 :
+		nextBlock = _gen_block( 40, pos)
+	else :
+		nextBlock = _gen_block(14, pos, true)
 	
 	
 	var genAttempts = 0

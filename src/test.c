@@ -7,24 +7,24 @@
 static int SIZE_X = 20;
 static int SIZE_Y = 20;
 
-const int BIRTH = 4;
-const int DEATH = 3;
+int birth = 4;
+int death = 3;
 
 const int FILL = 40;
 
 int map[20][20];
 
-void smooth_map();
+void smooth_map(int count, int extra);
 
 void print_map(int map[][SIZE_Y]);
 
-int get_neighbors(int x, int y, int map[][SIZE_Y]);
+int get_neighbors(int x, int y, int map[][SIZE_Y],int range);
 
 void gen_map(int map[SIZE_X][SIZE_Y]);
 
 void copy_map(int map[SIZE_X][SIZE_Y], int copy[][SIZE_Y]);
 
-void smooth(int map[][SIZE_Y]);
+void smooth(int map[][SIZE_Y], int range);
 
 
 
@@ -34,6 +34,7 @@ const godot_gdnative_ext_nativescript_api_struct *nativescript_api = NULL;
 GDCALLINGCONV void *simple_constructor(godot_object *p_instance, void *p_method_data);
 GDCALLINGCONV void simple_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data);
 godot_variant simple_get_map(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
+godot_variant simple_alt_map(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
 
 void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *p_options) {
 	api = p_options->api_struct;
@@ -72,11 +73,18 @@ void GDN_EXPORT godot_nativescript_init(void *desc) {
                         .free_func = 0
                 };
 
+                godot_instance_method alt_map = {
+                        .method = &simple_alt_map,
+                        .method_data = 0,
+                        .free_func = 0
+		};
                 godot_method_attributes attr = {
                         .rpc_type = GODOT_METHOD_RPC_MODE_DISABLED
                 };
 
                 godot_nativescript_register_method(desc, "SIMPLE", "get_map", attr, get_map);
+		
+		godot_nativescript_register_method(desc, "SIMPLE", "get_alt_map", attr, alt_map);
 
         }
 
@@ -152,22 +160,42 @@ godot_variant simple_build_dictionary(){
 
 void fill_map(godot_dictionary dictionary);
 
-godot_variant simple_get_map(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args) {
+
+godot_variant simple_alt_map(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args) {
+
 	godot_variant ret;
 	
+	birth = 8;
+	death = 3;
 	godot_dictionary dictIn;
 
 	dictIn = godot_variant_as_dictionary(*p_args);
 
 	fill_map(dictIn);
 
-	godot_string s;
+	smooth_map(4,2);
 
-	s = godot_string_num(p_num_args);
+	ret = simple_build_dictionary();
 
-	godot_print(&s);
+	return ret;
+}
+godot_variant simple_get_map(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args) {
+	godot_variant ret;
+	
+	birth = 4;
+	godot_dictionary dictIn;
 
-	smooth_map(8);
+	dictIn = godot_variant_as_dictionary(*p_args);
+
+	fill_map(dictIn);
+
+	//godot_string s;
+
+	//s = godot_string_num(p_num_args);
+
+	//godot_print(&s);
+
+	smooth_map(8,1);
 
 	ret = simple_build_dictionary();
 
@@ -194,16 +222,16 @@ void fill_map(godot_dictionary dictionary){
 	godot_dictionary_destroy(&dictionary);
 }
 
-void smooth_map(int count)
+void smooth_map(int count, int extra)
 {
 
 	for(int i = 0; i < count; i++){
-		smooth(map);
+		smooth(map, extra);
 	}
 }
 
 
-int get_neighbors(int xLoc, int yLoc, int map[][SIZE_Y]){
+int get_neighbors(int xLoc, int yLoc, int map[][SIZE_Y], int size){
 	
 	int count = 0;
 
@@ -214,8 +242,11 @@ int get_neighbors(int xLoc, int yLoc, int map[][SIZE_Y]){
 					if(x != xLoc || y != yLoc){
 						count += 1;
 					}
+					if(size ==2){
+						count += get_neighbors(x, y, map, 1);
+					}
 				}
-			} else{
+			} else{	
 			count += 1;
 			}
 		}
@@ -223,17 +254,17 @@ int get_neighbors(int xLoc, int yLoc, int map[][SIZE_Y]){
 	return count;
 }
 
-void smooth(int map[][SIZE_Y]){
+void smooth(int map[][SIZE_Y], int range){
 	
 	int copy[SIZE_X][SIZE_Y];
 	copy_map(map, copy);
 
 	for( int y = 0; y < SIZE_Y; y++){
 		for(int x = 0; x < SIZE_X; x++){
-			int nCount = get_neighbors(x,y, map);
-			if( map[x][y] == 0 && nCount < DEATH){
+			int nCount = get_neighbors(x,y, map, range);
+			if( map[x][y] == 0 && nCount < death){
 				copy[x][y] = -1;
-			}if( map[x][y] == -1 && nCount > BIRTH){
+			}if( map[x][y] == -1 && nCount > birth){
 				copy[x][y] = 0;
 			}
 		}

@@ -28,9 +28,9 @@ func _ready():
 	
 	for y in 5:
 #		seed(setSeed)
-		for x in 10 :
+		for x in 20 :
 			var pos = Vector2(x,y)*size
-			_gen_block(pos, 8, 40, 2, 3, 4, false)
+			_gen_block(14, pos, true)
 #			_gen_block(pos, 2, 15, 2, 3, 8, true)
 	
 	
@@ -38,22 +38,16 @@ func _ready():
 # 2smooth, 15 fill, 2 stray, 3 death, 8 birth, extended check
 # makes cool bubbles
 
-func _gen_block(position, smoothing, fill, stray, death, birth, extendedCheck):
-	var newBlock = block.instance()
+func _gen_block(fill, pos, alt = false ) :
 	
-	newBlock.deathLimit = death
-	newBlock.birthLimit = birth
-	newBlock.extendedCheck = extendedCheck
-	
-	newBlock.height = blockSize.y
-	newBlock.width = blockSize.x
-	newBlock.position = position
-	newBlock.strayCount = stray
-	newBlock.smoothCount = smoothing
-	newBlock.fillPercentage = fill
-	newBlock._generate_map()
-	newBlock._draw_map()
-	add_child(newBlock)
-	
+	var nextBlock = block.instance()
+	nextBlock.height = blockSize.y
+	nextBlock.width = blockSize.x
+	nextBlock.position = pos
+	nextBlock.fillPercentage = fill
+	nextBlock._generate_map(alt)
+	nextBlock._draw_map()
+	add_child(nextBlock)
+	return nextBlock
 
 
