@@ -1,6 +1,12 @@
 extends TileMap
-var width = 10
-var height = 10
+
+const GEN = preload("res://bin/test.gdns")
+var generator
+
+var width = 20
+var height = 20
+
+
 
 var smoothCount = 8
 var strayCount = 2
@@ -37,8 +43,15 @@ var validEnts = { "n" : [], "e" : [], "s" : [], "w": []}
 var mainEnt
 var paths = []
 
+
+
 func _init():
+	generator = GEN.new()
 	pass
+
+func _ready():
+	_generate_map()
+	_draw_map()
 
 func _consolidate_entrances():
 	
@@ -105,31 +118,19 @@ func _generate_map():
 	
 	var time = OS.get_ticks_msec()
 	
-	for x in width :
-		for y in height:
-			map[Vector2(x,y)] = -1
-	
-	
 	_random_fill_map()
-	time = OS.get_ticks_msec()-time
-	print("Random fill time : ", time)
-	for x in smoothCount :
-		_smooth_map()
-	time = OS.get_ticks_msec()-time
-	print("Smooth time : ", OS.get_ticks_msec()-time)
+	map = generator.get_map(map, [])
+	
+#	print("Smooth time : ", OS.get_ticks_msec()-time)
 	for x in strayCount :
 		_clean_strays()
-	time = OS.get_ticks_msec()-time
-	print("Clean time : ", time)
-	for x in reSmooth :
-		_smooth_map()
 	
 	entrances = _find_entrances()
-	time = OS.get_ticks_msec()-time
-	print("_find_ent time : ", time)
+#	time = OS.get_ticks_msec()-time
+#	print("_find_ent time : ", OS.get_ticks_msec()-time)
 	_consolidate_entrances()
-	time = OS.get_ticks_msec()-time
-	print("Consolidate time : ", time)
+#	time = OS.get_ticks_msec()-time
+#	print("Consolidate time : ", OS.get_ticks_msec()-time)
 	
 
 func _draw_map():

@@ -183,10 +183,11 @@ func _add_block(curr, face, fullMatching = false) :
 	
 	var nextBlock
 	
-	if noEntSide.size() > 0 :
-		nextBlock = _gen_block( 8, 40, 4, false, pos)
-	else :
-		nextBlock = _gen_block( 2, 15, 8, true, pos)
+	nextBlock = _gen_block( 8, 40, 4, false, pos)
+#	if noEntSide.size() > 0 :
+#		nextBlock = _gen_block( 8, 40, 4, false, pos)
+#	else :
+#		nextBlock = _gen_block( 2, 15, 8, true, pos)
 	
 	
 	var genAttempts = 0
