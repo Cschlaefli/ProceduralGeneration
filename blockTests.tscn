@@ -3,7 +3,7 @@
 [ext_resource path="res://blockTests.gd" type="Script" id=1]
 [ext_resource path="res://Camera2DScrolling.tscn" type="PackedScene" id=2]
 
-[node name="blockTests" type="Node"]
+[node name="blockTests" type="Node" index="0"]
 script = ExtResource( 1 )
 blockSize = Vector2( 20, 20 )
 cellSize = Vector2( 32, 32 )

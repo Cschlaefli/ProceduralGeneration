@@ -4,6 +4,7 @@ const BLOCK = "res://blocks/blockGen.tscn"
 var nextBlock
 var block
 
+
 export var blockSize = Vector2(20,20)
 export var cellSize = Vector2(32,32)
 
@@ -26,6 +27,7 @@ var setSeed = 1291490227
 var randomSeed = true
 
 var totalGenerationAttempts = 0
+var failToFindCount = 0
 
 func _ready():
 	
@@ -41,7 +43,8 @@ func _ready():
 
 func _add_start_block():
 	
-	var startBlock = _gen_block( 40, Vector2(0,0))
+#	var startBlock = _gen_block( 40, Vector2(0,0))
+	var startBlock = _gen_block(8, 40,3,4, Vector2(0,0))
 	
 	var time = OS.get_ticks_msec()
 	
@@ -142,16 +145,29 @@ func _fill_block(block, valid = true) :
 		if block.validEnts[dir].size() > 0 :
 			_add_block(block, dir, true)
 
-func _gen_block(fill, pos, alt = false ) :
+#func _gen_block(fill, pos, alt = false ) :
+#
+#	var nextBlock = block.instance()
+#	nextBlock.position = pos
+#	nextBlock.fillPercentage = fill
+#	nextBlock.alternate = alt
+#	nextBlock._generate_map()
+#
+#	return nextBlock
+
+func _gen_block(smooth, fill, death, birth, pos, alt = 1 ) :
 	
 	var nextBlock = block.instance()
+	nextBlock.height = blockSize.y
+	nextBlock.width = blockSize.x
 	nextBlock.position = pos
 	nextBlock.fillPercentage = fill
+	nextBlock.smoothCount  = smooth
+	nextBlock.birthLimit = birth
+	nextBlock.deathLimit = death
 	nextBlock.alternate = alt
 	nextBlock._generate_map()
-	
 	return nextBlock
-
 
 
 func _add_block(curr, face, fullMatching = false) :
@@ -178,9 +194,9 @@ func _add_block(curr, face, fullMatching = false) :
 	var nextBlock
 	
 	if noEntSide.size() > 0 :
-		nextBlock = _gen_block( 40, pos)
+		nextBlock = _gen_block(8, 40,3,4, pos)
 	else :
-		nextBlock = _gen_block(14, pos, true)
+		nextBlock = _gen_block(4,14, 7,6, pos, 2)
 	
 	
 	var genAttempts = 0

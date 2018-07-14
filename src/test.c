@@ -168,6 +168,7 @@ godot_variant simple_alt_map(godot_object *p_instance, void *p_method_data, void
 	birth = 8;
 	death = 3;
 	godot_dictionary dictIn;
+	
 
 	dictIn = godot_variant_as_dictionary(*p_args);
 
@@ -182,11 +183,18 @@ godot_variant simple_alt_map(godot_object *p_instance, void *p_method_data, void
 godot_variant simple_get_map(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args) {
 	godot_variant ret;
 	
-	birth = 4;
 	godot_dictionary dictIn;
 
-	dictIn = godot_variant_as_dictionary(*p_args);
+	dictIn = godot_variant_as_dictionary(p_args[0]);
+	
+	int smooth = godot_variant_as_int(p_args[1]);
 
+	birth = godot_variant_as_int(p_args[2]);
+
+	death = godot_variant_as_int(p_args[3]);
+
+	int alternate = godot_variant_as_int(p_args[4]);
+	
 	fill_map(dictIn);
 
 	//godot_string s;
@@ -195,7 +203,7 @@ godot_variant simple_get_map(godot_object *p_instance, void *p_method_data, void
 
 	//godot_print(&s);
 
-	smooth_map(8,1);
+	smooth_map(smooth ,alternate);
 
 	ret = simple_build_dictionary();
 
@@ -241,9 +249,9 @@ int get_neighbors(int xLoc, int yLoc, int map[][SIZE_Y], int size){
 				if( map[x][y] == 0){
 					if(x != xLoc || y != yLoc){
 						count += 1;
-					}
-					if(size ==2){
-						count += get_neighbors(x, y, map, 1);
+						if(size >= 2){
+							count += get_neighbors(x, y, map, size-1);
+						}
 					}
 				}
 			} else{	

@@ -2,7 +2,7 @@ extends TileMap
 
 const GEN = preload("res://bin/test.gdns")
 var generator
-var alternate = false
+var alternate = 1
 
 var width = 20
 var height = 20
@@ -117,12 +117,9 @@ func _generate_map():
 	
 	var time = OS.get_ticks_msec()
 	
-	_random_fill_map()
-	if( alternate ):
-		map = generator.get_alt_map(map)
-	else :
-		map = generator.get_map(map)
-#	print("Smooth time : ", OS.get_ticks_msec()-time)
+	_random_fill_map() 
+	map = generator.get_map(map, smoothCount, birthLimit, deathLimit, alternate)
+	
 	for x in strayCount :
 		_clean_strays()
 	
@@ -383,7 +380,7 @@ func _test_maps() :
 					_find_paths()
 					var count = 0
 					for dir2 in dirNames :
-						if validEnts[dir2].size() > 2 && dir != dir2 :
+						if validEnts[dir2].size() > 1 && dir != dir2 :
 							count += 1
 					dirCount["paths"] += count
 				dirCount[dir] += 1
