@@ -48,26 +48,40 @@ func _init():
 	pass
 #
 #func _ready():
-#	_test_maps()
+#	_generate_map()
+#	_draw_map()
 
 func _consolidate_entrances():
 	
+	for corner in corners :
+		var cell = map[corner]
+		if cell == -1 :
+			var neighbors = _get_neighbors_value(corner, true)
+			for n in neighbors :
+				if n == 0 :
+					map[corner] = 0
+					break
 	
-	map = generator.fill_ents(entrances, fillCut)
+	for d in dirNames :
+		var dir = entrances[d]
+		
+		for ent in dir :
+			var fill = _find_fill(ent[0])
+			if fill.size() < fillCut + ent.size() :
+				for cell in fill :
+					map[cell] = 0
 	
-	entrances = { "n" : [], "s" : [], "e" : [], "w" : [] }
-	generator.get_ents(entrances, map) 
+	entrances = _find_entrances()
 	
-	
-#	for d in dirNames :
-#		var dir = entrances[d]
-#		#this keeps breaking
-#		if dir.size() > 1 :
-#			for x in range(1, dir.size()-1) :
-#				if _has_path(dir[0], dir[x]) :
-#					for block in dir[x] :
-#						dir[0].append(block)
-#					entrances[d].remove(x)
+	for d in dirNames :
+		var dir = entrances[d]
+		#this keeps breaking
+		if dir.size() > 1 :
+			for x in range(1, dir.size()-1) :
+				if _has_path(dir[0], dir[x]) :
+					for block in dir[x] :
+						dir[0].append(block)
+					entrances[d].remove(x)
 	
 	
 
@@ -102,21 +116,21 @@ func _generate_map():
 	
 	var time = OS.get_ticks_msec()
 	
-	
 	_random_fill_map() 
-	map = generator.get_map(map, smoothCount, birthLimit, deathLimit, alternate, strayCount)
-#	print("Gen time : ", OS.get_ticks_msec()-time)
+	map = generator.get_map(map, smoothCount, birthLimit, deathLimit, alternate)
+	print("Gen time : ", OS.get_ticks_msec()-time)
 	
+#	for x in strayCount :
+#		_clean_strays()
 	
-	generator.get_ents(entrances, map)
+#	var ents = entrances.duplicate()
 	
+	print(generator.get_ents(entrances, map))
 	
-	entrances = { "n" : [], "s" : [], "e" : [], "w" : [] }
-	generator.get_ents(entrances, map) 
-	
-#	print("Clean strays time : ", OS.get_ticks_msec()-time)
-	_consolidate_entrances()
-#	print("Consolidate time : ", OS.get_ticks_msec()-time)
+#	entrances = _find_entrances()
+	print("_find_ent time : ", OS.get_ticks_msec()-time)
+#	_consolidate_entrances()
+	print("Consolidate time : ", OS.get_ticks_msec()-time)
 
 
 func _draw_map():
@@ -174,6 +188,40 @@ func _get_surrounding_wall_count(cell, extra = false):
 	
 	return wallCount
 
+func _copy_map(input) :
+	
+	var copy = {}
+	
+	for x in width :
+		for y in height:
+			var cell = Vector2(x,y)
+			copy[cell] = map[cell]
+	
+	return copy
+
+
+func _smooth_map():
+	var x = width-1
+	var y = height-1
+	
+	var copy = _copy_map(map)
+	
+	while x > -1:
+		while y > -1:
+			var cell = Vector2(x,y)
+			if map[cell] != 1 :
+				var neighborTiles = _get_surrounding_wall_count(cell, extendedCheck)
+				
+				if map[cell] == 0:
+					if neighborTiles < deathLimit:
+						copy[cell] = -1
+				elif map[cell] == -1:
+					if neighborTiles > birthLimit:
+							copy[cell] = 0
+			y -= 1
+		y = height-1
+		x -= 1
+	map = copy
 
 func _random_fill_map():
 	
@@ -185,6 +233,81 @@ func _random_fill_map():
 			else :
 				map[cell] = -1
 
+func _find_entrances():
+	
+	var ents = { "n" : [], "s" : [], "e" : [], "w" : [] }
+	
+	var y = 0
+	var x = 0
+	var ent2 = []
+	var ent1 = []
+	
+	while y < height:
+#		if map[0][y] == -1 && (_get_neighbors_value(Vector2(0,y)).count(-1) > 1 || ent1.size() > entSize) :
+		var cell1 = Vector2(0,y)
+		if map[cell1] == -1 :
+			ent1.push_back(cell1)
+		else :
+			if ent1.size() < entSize :
+				ent1.pop_back()
+			else :
+				ents["w"].push_back(ent1.duplicate())
+				ent1 = []
+#		if map[width-1][y] == -1 && (_get_neighbors_value(Vector2(width-1,y)).count(-1) > 1 || ent2.size() > entSize) :
+		var cell2 = Vector2(width-1,y)
+		if map[cell2] == -1 :
+			ent2.push_back(cell2)
+		else :
+			if ent2.size() < entSize :
+				ent2.pop_back()
+			else:
+				ents["e"].push_back(ent2.duplicate())
+				ent2 = []
+		y += 1
+	if ent1.size() > entSize :
+		ents["w"].push_front(ent1)
+	if ent2.size() > entSize :
+		ents["e"].push_front(ent2)
+	
+	ent2 = []
+	ent1 = []
+	
+	while x < width:
+#		if map[x][0] == -1 && _get_neighbors_value(Vector2(x,0)).count(-1) > 1 :
+		var cell1 = Vector2(x,0)
+		if map[cell1] == -1 :
+			ent1.push_back(cell1)
+		else :
+			if ent1.size() < entSize :
+				ent1.pop_back()
+			else :
+				ents["n"].push_back(ent1.duplicate())
+				ent1 = []
+#		if map[x][height-1] == -1 && _get_neighbors_value(Vector2(x,height-1)).count(-1) > 1:
+		var cell2 = Vector2(x,height-1)
+		if map[cell2] == -1 :
+			ent2.push_back(cell2)
+		else :
+			if ent2.size() < entSize :
+				ent2.pop_back()
+			else :
+				ents["s"].push_back(ent2.duplicate())
+				ent2 = []
+		x += 1
+	
+	if ent1.size() > entSize :
+		ents["n"].push_front(ent1)
+	if ent2.size() > entSize :
+		ents["s"].push_front(ent2)
+	
+	var entCount = 0
+	
+	for x in ents.values() :
+		entCount += x.size()
+	
+	
+	ents["count"] = entCount
+	return ents
 
 func _show_ents():
 	for dirs in dirNames :
@@ -236,7 +359,6 @@ func _has_path(starts, ends):
 #					else :
 						q.push_front(next)
 						visited[next] = true
-	
 	return false
 
 func _raw_fill():
@@ -251,22 +373,19 @@ func _raw_fill():
 func _test_maps() :
 	var dirCount = {"n": 0,"s" :0,"e":0,"w":0, "paths":0}
 	
-	randomize()
-	
-	for x in 10000 :
+	for x in 100 :
 		_generate_map()
-#		for dir in dirNames :
-#			if entrances[dir].size() != 0 :
-#				if mainEnt == [] :
-#					mainEnt = entrances[dir][0]
-#					_find_paths()
-#					var count = 0
-#					for dir2 in dirNames :
-#						if validEnts[dir2].size() > 1 && dir != dir2 :
-#							count += 1
-#					dirCount["paths"] += count
-#				dirCount[dir] += 1
-#		mainEnt = []
-#	print(dirCount)
+		for dir in dirNames :
+			if entrances[dir].size() != 0 :
+				if mainEnt == [] :
+					mainEnt = entrances[dir][0]
+					_find_paths()
+					var count = 0
+					for dir2 in dirNames :
+						if validEnts[dir2].size() > 1 && dir != dir2 :
+							count += 1
+					dirCount["paths"] += count
+				dirCount[dir] += 1
+		mainEnt = []
+	print(dirCount)
 	
-

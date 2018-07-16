@@ -87,6 +87,7 @@ func _input(event):
 		print ( "seed : ",  setSeed)
 		print ( "Time taken : " , time)
 		print ( "Total Generations attempts : ", totalGenerationAttempts)
+		print ( "Fail to find count : ", failToFindCount)
 		print ( "Total size : ", blockGrid.size() )
 		print ( "Average generation attempts : ", totalGenerationAttempts/blockGrid.size())
 		print ( "Time per generation : ", time/totalGenerationAttempts)
@@ -205,6 +206,8 @@ func _add_block(curr, face, fullMatching = false) :
 		genAttempts += 1
 		if genAttempts > 2000 :
 			print ("fail to find")
+			print ("fail time : ", OS.get_ticks_msec()-time)
+			failToFindCount += 1
 			return false
 		var nextEnts = nextBlock.entrances[matchingCardinal[face]]
 		#used to be validents

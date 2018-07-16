@@ -9,7 +9,7 @@ export var cellSize = Vector2(32,32)
 
 var size = cellSize*blockSize
 
-var setSeed = 1291490227
+var setSeed = 1234
 var randomSeed = true
 
 var totalGenerationAttempts = 0
@@ -26,12 +26,12 @@ func _ready():
 	
 	var start = Vector2(0,0)
 	
-	for y in 2:
+	for y in 10:
 #		seed(setSeed)
-		for x in 2 :
+		for x in 10 :
 			var pos = Vector2(x,y)*size
-			var block = _gen_block(3, 14, 3, 7, pos, 2)
-			block._test_maps()
+			_gen_block(3,14, 7,6, pos, 2)
+#			_gen_block(8, 40,3,4, pos)
 	
 	
 
