@@ -14,6 +14,10 @@ int death = 3;
 int map[20][20];
 int fillCopy[20][20];
 
+bool check_path(int x, int y, int endX, int endY);
+
+bool has_path(int x, int y, int endX, int endY);
+
 void smooth_map(int count, int extra);
 
 void print_map(int map[][SIZE_Y]);
@@ -51,6 +55,7 @@ GDCALLINGCONV void simple_destructor(godot_object *p_instance, void *p_method_da
 godot_variant simple_get_map(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
 godot_variant simple_get_ents(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
 godot_variant simple_fill_ents(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
+godot_variant simple_check_path(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
 
 void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *p_options) {
 	api = p_options->api_struct;
@@ -101,6 +106,11 @@ void GDN_EXPORT godot_nativescript_init(void *desc) {
                         .free_func = 0
                 };
 
+		godot_instance_method check_path = {
+                        .method = &simple_check_path,
+                        .method_data = 0,
+                        .free_func = 0
+                };
 
                godot_method_attributes attr = {
                         .rpc_type = GODOT_METHOD_RPC_MODE_DISABLED
@@ -111,6 +121,8 @@ void GDN_EXPORT godot_nativescript_init(void *desc) {
                 godot_nativescript_register_method(desc, "SIMPLE", "get_ents", attr, get_ents);
 
                 godot_nativescript_register_method(desc, "SIMPLE", "fill_ents", attr, fill_ents);
+
+                godot_nativescript_register_method(desc, "SIMPLE", "check_path", attr, check_path);
         }
 
 }
@@ -218,6 +230,53 @@ godot_variant simple_get_map(godot_object *p_instance, void *p_method_data, void
 	ret = simple_build_dictionary();
 
 	return ret;
+}
+
+//pass map, vector2start, vector2end, returns bool;
+godot_variant simple_check_path(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args) {
+	godot_variant ret;
+
+	godot_dictionary dictIn = godot_variant_as_dictionary(p_args[0]);
+
+	fill_map(dictIn);
+	
+	godot_vector2 start = godot_variant_as_vector2(p_args[1]);	
+	godot_vector2 end = godot_variant_as_vector2(p_args[2]);
+
+	int x = (int)godot_vector2_get_x(&start);
+	int y = (int)godot_vector2_get_y(&start);	
+
+	int endX = (int)godot_vector2_get_x(&end);
+	int endY = (int)godot_vector2_get_y(&end);	
+
+	bool has = check_path(x,y,endX,endY);
+
+	godot_variant_new_bool(&ret, has);
+
+	godot_dictionary_destroy(&dictIn);
+
+	return ret; 
+}
+
+bool check_path(int x, int y, int endX, int endY){
+
+	copy_map(map, fillCopy);
+	return has_path;
+}
+
+bool has_path(int x, int y, int endX, int endY){
+	
+	if ( x >= 0 && y >= 0 && x < SIZE_X && y < SIZE_Y &&  fillCopy[x][y] == -1){
+		if( x == endX && y == endY){
+			return true;
+		}
+		fillCopy[x][y] = 0;
+		return has_path(x+1,y, endX, endY);
+		return has_path(x+1,y, endX, endY);
+		return has_path(x+1,y, endX, endY);
+		return has_path(x+1,y, endX, endY);
+	}
+	return false;
 }
 
 void fill_map(godot_dictionary dictionary){

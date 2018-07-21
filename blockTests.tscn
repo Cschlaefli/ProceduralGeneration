@@ -6,7 +6,7 @@
 [node name="blockTests" type="Node"]
 script = ExtResource( 1 )
 blockSize = Vector2( 20, 20 )
-cellSize = Vector2( 32, 32 )
+cellSize = Vector2( 40, 40 )
 
 [node name="Camera2D" parent="." index="0" instance=ExtResource( 2 )]
 position = Vector2( 2551.75, 1494.32 )

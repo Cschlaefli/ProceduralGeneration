@@ -22,5 +22,5 @@ occluder_light_mask = 1
 format = 1
 tile_data = PoolIntArray(  )
 script = ExtResource( 2 )
-_sections_unfolded = [ "Cell", "Transform", "tile_set" ]
+_sections_unfolded = [ "Collision", "Transform", "tile_set" ]
 

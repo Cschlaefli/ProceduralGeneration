@@ -18,10 +18,10 @@ var extendedCheck = false
 
 var entSize = 1
 var entCap = 8
-var fillCut = 10
+var fillCut = 40
 
 
-var corners = [Vector2(0,0), Vector2(width-1,0), Vector2(width-1, height-1), Vector2(0, height-1)]
+#var corners = [Vector2(0,0), Vector2(width-1,0), Vector2(width-1, height-1), Vector2(0, height-1)]
 
 const cardinalDirs = [Vector2(0,1), Vector2(1,0), Vector2(-1,0), Vector2(0,-1)]
 const diagDirs = [Vector2(1,1), Vector2(-1,1),Vector2(-1,-1),Vector2(1,-1)]
@@ -58,16 +58,21 @@ func _consolidate_entrances():
 	entrances = { "n" : [], "s" : [], "e" : [], "w" : [] }
 	generator.get_ents(entrances, map) 
 	
-	
-#	for d in dirNames :
-#		var dir = entrances[d]
-#		#this keeps breaking
-#		if dir.size() > 1 :
-#			for x in range(1, dir.size()-1) :
-#				if _has_path(dir[0], dir[x]) :
-#					for block in dir[x] :
-#						dir[0].append(block)
-#					entrances[d].remove(x)
+#	print("before : ", entrances)
+	for d in dirNames :
+		var dir = entrances[d]
+		
+		for ent in entrances[d] :
+			if ent.size() == 1 :
+				map[ent[0]] = 0
+				entrances[d].remove(entrances[d].find(ent))
+		
+		if dir.size() > 1 :
+			for x in range(dir.size(), 1) :
+				if generator.check_path(map, dir[0][0], dir[x][0]) :
+					for block in dir[x] :
+						dir[0].append(block)
+					entrances[d].remove(x)
 	
 	
 
@@ -76,7 +81,8 @@ func _find_paths():
 	for dir in dirNames :
 		validEnts[dir].clear()
 		for ent in entrances[dir] :
-			if _has_path(mainEnt, ent) :
+#			if _has_path(mainEnt, ent) 
+			if generator.check_path(map, mainEnt[0], ent[0]):
 				validEnts[dir].append(ent)
 	
 
@@ -105,8 +111,6 @@ func _generate_map():
 	
 	_random_fill_map() 
 	map = generator.get_map(map, smoothCount, birthLimit, deathLimit, alternate, strayCount)
-#	print("Gen time : ", OS.get_ticks_msec()-time)
-	
 	
 	generator.get_ents(entrances, map)
 	
@@ -114,38 +118,40 @@ func _generate_map():
 	entrances = { "n" : [], "s" : [], "e" : [], "w" : [] }
 	generator.get_ents(entrances, map) 
 	
-#	print("Clean strays time : ", OS.get_ticks_msec()-time)
 	_consolidate_entrances()
-#	print("Consolidate time : ", OS.get_ticks_msec()-time)
+#	print("Gen time : ", OS.get_ticks_msec()-time)
 
 
 func _draw_map():
 	var time = OS.get_ticks_msec()
 	
+	for cell in map :
+		if get_cell(cell.x, cell.y) != map[cell] :
+			set_cell(cell.x, cell.y, map[cell]) 
 	
-	var x = 0
-	var y = 0
-	while x < width :
-		while y < height :
-			var cell = Vector2(x,y)
-			if get_cell(x,y) != map[cell]:
-				set_cell(x,y, map[cell])
-			y += 1
-		y = 0
-		x += 1
+#	var x = 0
+#	var y = 0
+#	while x < width :
+#		while y < height :
+#			var cell = Vector2(x,y)
+#			if get_cell(x,y) != map[cell]:
+#				set_cell(x,y, map[cell])
+#			y += 1
+#		y = 0
+#		x += 1
 #	time = OS.get_ticks_msec()-time
 #	print("Time to draw : ", time)
 #	print("Time per block : ", time/(height*width))
 #	print("Timer per drawn block ", time/_raw_fill())
 
-func _clean_strays():
-	var copy = map
-	for x in width :
-		for y in height:
-			var cell = Vector2(x,y)
-			if !_get_cardinal_wall_count(cell) > 1 :
-				copy[cell] = -1
-	map = copy
+#func _clean_strays():
+#	var copy = map
+#	for x in width :
+#		for y in height:
+#			var cell = Vector2(x,y)
+#			if !_get_cardinal_wall_count(cell) > 1 :
+#				copy[cell] = -1
+#	map = copy
 
 func _get_cardinal_wall_count(cell):
 	

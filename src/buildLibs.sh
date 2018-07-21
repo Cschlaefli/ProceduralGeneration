@@ -1,5 +1,7 @@
 #!/bin/bash
 
-clang -std=c11 -fPIC -c -I /home/cslaf/godot/godot_headers/ test.c -o testlib.os
+header="/home/cslaf/godot/godot_headers/"
+
+clang -std=c11 -g -fPIC -c -I $header  test.c -o testlib.os
 clang -shared testlib.os -o ../bin/testlib.so
 

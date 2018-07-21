@@ -1,7 +1,6 @@
 extends Node
 
 const BLOCK = "res://blocks/blockGen.tscn"
-const PLAYER = "res://player.tscn"
 var nextBlock
 var block
 
@@ -26,8 +25,8 @@ var graph = {}
 
 var blockGrid = {}
 var blocksToFill = []
-var setSeed = 3554878158
-var randomSeed = false
+var setSeed = 3846058001
+var randomSeed = true
 
 var totalGenerationAttempts = 0
 var failToFindCount = 0
@@ -41,41 +40,45 @@ func _ready():
 	print(setSeed)
 	
 	block = ResourceLoader.load(BLOCK)
-	var player = ResourceLoader.load(PLAYER)
 	
-	_add_start_block()
+	_gen_full_map()
+
+func _gen_full_map():
 	
-#	_fill_shaft()
+	var fullTime = 0
+	var fullSize = 0
+	var failCount = 0
+	var furthestCount = 0
 	
-	while !blocksToFill.empty() : 
-		_fill_block(blocksToFill.pop_front())
+	var gens = 100
 	
-	var playerAdd = player.instance()
+	for x in gens:
+		
+		graph = {}
+		blockGrid = {}
+		failToFindCount = 0
+		
+		var time  = OS.get_ticks_msec()
+		_add_start_block()
+		while !blocksToFill.empty() : 
+			_fill_block(blocksToFill.pop_front())
+		
+		failCount += failToFindCount
+		furthestCount += _furthest_block()
+		fullTime += OS.get_ticks_msec()-time
+		fullSize += blockGrid.size()
+		
+		for block in blockGrid.values() :
+			block.free()
 	
-	playerAdd.position = blockGrid[Vector2(0,0)].mainEnt[0] + Vector2(0,-100) 
-	
-#	add_child(playerAdd)
+	print("Total time : ", fullTime)
+	print("Average time : ", fullTime/gens)
+	print("Average size : ", fullSize/gens)
+	print("Average fails : ", failCount/gens)
+	print("Average furthest : ", furthestCount/gens)
 	
 	
 
-func _fill_shaft():
-	
-	var shaftL = Vector2(1,5)
-	
-	for y in range(0, shaftL.y):
-		for x in range(-shaftL.x, shaftL.x):
-			#try add -y and y
-			var pos = Vector2(x,y)*size
-			var mandatory = [ "s" ]
-			if !blockGrid.has(pos):
-				continue
-			if _add_block(blockGrid[pos], "s", true, ["s"]) :
-				break
-			elif _add_block(blockGrid[pos], "e", true, ["s"]) :
-				break
-			elif _add_block(blockGrid[pos], "w", true, ["s"]) :
-				break
-	
 
 func _add_start_block():
 	
@@ -95,7 +98,7 @@ func _add_start_block():
 		startBlock._generate_map()
 	
 	startBlock.modulate = Color(1.0,.5,1.0)
-	startBlock._draw_map()
+#	startBlock._draw_map()
 	add_child(startBlock)	
 	
 	graph[startBlock.position] = []
@@ -103,9 +106,6 @@ func _add_start_block():
 	for dir in cardinal :
 		if startBlock.validEnts[dir].size() > 0  && dir != "n":
 			_add_block(startBlock, dir)
-	
-	
-
 
 func _furthest_block():
 	
@@ -125,9 +125,7 @@ func _furthest_block():
 		elif curr == furthest :
 			ret.push_back(block)
 	
-	print(ret)
-	print(furthest)
-	
+	return furthest
 	
 
 func _input(event):
@@ -143,27 +141,27 @@ func _input(event):
 	if event.is_action_pressed("shift"):
 		_find_valid_ents()
 	
-#	if event.is_action_pressed("ui_select"):
-#		var time  = OS.get_ticks_msec()
-#		while !blocksToFill.empty() : 
-#			_fill_block(blocksToFill.pop_front())
-#		time = OS.get_ticks_msec()
-#		print ( "seed : ",  setSeed)
-#		print ( "Time taken : " , time)
-#		print ( "Total Generations attempts : ", totalGenerationAttempts)
-#		print ( "Fail to find count : ", failToFindCount)
-#		print ( "Total size : ", blockGrid.size() )
-#		print ( "Average generation attempts : ", totalGenerationAttempts/blockGrid.size())
-#		print ( "Time per generation : ", time/totalGenerationAttempts)
-#		print ( "Time per block : ", time/blockGrid.size())
+	if event.is_action_pressed("ui_select"):
+		var time  = OS.get_ticks_msec()
+		while !blocksToFill.empty() : 
+			_fill_block(blocksToFill.pop_front())
+		time = OS.get_ticks_msec()
+		print ( "seed : ",  setSeed)
+		print ( "Time taken : " , time)
+		print ( "Total Generations attempts : ", totalGenerationAttempts)
+		print ( "Fail to find count : ", failToFindCount)
+		print ( "Total size : ", blockGrid.size() )
+		print ( "Average generation attempts : ", totalGenerationAttempts/blockGrid.size())
+		print ( "Time per generation : ", time/totalGenerationAttempts)
+		print ( "Time per block : ", time/blockGrid.size())
 	
 	
-#	if event.is_action_pressed("ui_accept") :
-#		var time  = OS.get_ticks_msec()
-#		if !blocksToFill.empty() :
+	if event.is_action_pressed("ui_accept") :
+		var time  = OS.get_ticks_msec()
+		if !blocksToFill.empty() :
 #			print("fillingNext")
 #			blocksToFill[0].modulate = Color(1.0,1.0,1.0)
-#			_fill_block(blocksToFill.pop_front())
+			_fill_block(blocksToFill.pop_front())
 #			print("filled")
 #		print( blockGrid.size(), " blocks in : ", OS.get_ticks_msec()-time )
 
@@ -251,12 +249,12 @@ func _gen_block(smooth, fill, death, birth, pos, alt = 1 ) :
 	return nextBlock
 
 
-func _add_block(curr, face, fullMatching = false, mandatoryFaces = [], alt = false) :
+func _add_block(curr, face, fullMatching = false) :
 	
 	var pos = curr.position+cardinal[face]*size
 	
 	if blockGrid.has(pos) :
-		return false
+		return true
 	
 	var noEntSide = []
 	
@@ -274,12 +272,12 @@ func _add_block(curr, face, fullMatching = false, mandatoryFaces = [], alt = fal
 	
 	var nextBlock
 	
-	if !alt :
-		nextBlock = _gen_block(8, 40,3,4, pos)
-	else :
-		nextBlock = _gen_block(4,15, 7,6, pos, 2)
+#	if noEntSide.size() > 0 :
+#		nextBlock = _gen_block(8, 40,3,4, pos)
+#	else :
+#		nextBlock = _gen_block(4,15, 7,6, pos, 2)
 	
-#	nextBlock = _gen_block(8, 40,3,4, pos)
+	nextBlock = _gen_block(8, 40,3,4, pos)
 	
 	graph[nextBlock.position] = []
 	
@@ -291,8 +289,8 @@ func _add_block(curr, face, fullMatching = false, mandatoryFaces = [], alt = fal
 		genAttempts += 1
 		if genAttempts > 10000 :
 			totalGenerationAttempts += genAttempts
-			print ("fail to find")
-			print ("fail time : ", OS.get_ticks_msec()-time)
+#			print ("fail to find")
+#			print ("fail time : ", OS.get_ticks_msec()-time)
 #			curr.modulate = Color(.5,1.0,.5)
 			failToFindCount += 1
 			return false
@@ -302,7 +300,7 @@ func _add_block(curr, face, fullMatching = false, mandatoryFaces = [], alt = fal
 		
 		var vEnts = false
 		for side in noEntSide :
-			if side != matchingCardinal[face] && mandatoryFaces.size() <= 0 :
+			if side != matchingCardinal[face] :
 				if nextBlock.entrances[side].size() > 0 :
 					nextBlock._generate_map()
 					vEnts = true
@@ -315,16 +313,6 @@ func _add_block(curr, face, fullMatching = false, mandatoryFaces = [], alt = fal
 			if valid.size() > 1 :
 				nextBlock.mainEnt = valid
 				nextBlock._find_paths()
-				
-				var vEnts2 = false
-				for side in mandatoryFaces :
-					if side != matchingCardinal[face] :
-						if nextBlock.validEnts[side].size() < 0 :
-							nextBlock._generate_map()
-							vEnts = true
-							break
-				if vEnts2 :
-					continue
 				
 				var neighbors = _get_neighbors(nextBlock, matchingCardinal[face])
 				var count = 0
@@ -353,10 +341,10 @@ func _add_block(curr, face, fullMatching = false, mandatoryFaces = [], alt = fal
 				graph[curr.position].push_back(nextBlock.position)
 				blockGrid[nextBlock.position] = nextBlock
 				blocksToFill.push_back(nextBlock)
-				print("block added in : ", OS.get_ticks_msec()-time)
+#				print("block added in : ", OS.get_ticks_msec()-time)
 				totalGenerationAttempts += genAttempts
-				print("generation attempts : ", genAttempts)
-				nextBlock._draw_map()
+#				print("generation attempts : ", genAttempts)
+#				nextBlock._draw_map()
 				add_child(nextBlock)
 				return true
 		nextBlock._generate_map()

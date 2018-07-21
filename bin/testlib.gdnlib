@@ -7,7 +7,7 @@ reloadable=true
 
 [entry]
 
-X11.64="res://bin/testlib.so"
+X11.64="res://bin/libtest.so"
 
 [dependencies]
 
