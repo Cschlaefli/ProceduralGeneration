@@ -3,7 +3,7 @@
 import os, subprocess
 
 # Local dependency paths, adapt them to your setup
-godot_headers_path = "/home/cslaf/godot/godot_headers"
+godot_headers_path = "./godot_headers"
 
 
 target = ARGUMENTS.get("target", "debug")

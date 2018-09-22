@@ -12,5 +12,3 @@ X11.64="res://bin/libtest.so"
 [dependencies]
 
 X11.64=[  ]
-Windows.64=[  ]
-OSX.64=[  ]
