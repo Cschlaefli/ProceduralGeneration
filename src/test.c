@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <limits.h>
 
 static int SIZE_X = 20;
 static int SIZE_Y = 20;
@@ -56,6 +57,53 @@ godot_variant simple_get_map(godot_object *p_instance, void *p_method_data, void
 godot_variant simple_get_ents(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
 godot_variant simple_fill_ents(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
 godot_variant simple_check_path(godot_object *p_instance, void *p_method_data, void *p_user_data, int p_num_args, godot_variant **p_args);
+
+struct Point{
+	int x, y;
+};
+
+struct StackNode 
+{ 
+    struct Point data; 
+    struct StackNode* next; 
+}; 
+  
+struct StackNode* newNode(struct Point data) 
+{ 
+    struct StackNode* stackNode = 
+              (struct StackNode*) malloc(sizeof(struct StackNode)); 
+    stackNode->data.x = data.x;
+    stackNode->data.y = data.y; 
+    stackNode->next = NULL; 
+    return stackNode; 
+} 
+  
+bool isEmpty(struct StackNode *root) 
+{ 
+    return !root; 
+} 
+  
+void push(struct StackNode** root, struct Point data) 
+{ 
+    struct StackNode* stackNode = newNode(data);
+    stackNode->next = *root; 
+    *root = stackNode; 
+} 
+  
+struct Point pop(struct StackNode** root) 
+{ 
+    struct Point null = {-100,-100};
+    if (isEmpty(*root)) 
+        return null; 
+    struct StackNode* temp = *root; 
+    *root = (*root)->next; 
+    struct Point popped = temp->data; 
+    free(temp); 
+  
+    return popped; 
+} 
+
+
 
 void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *p_options) {
 	api = p_options->api_struct;
@@ -249,7 +297,7 @@ godot_variant simple_check_path(godot_object *p_instance, void *p_method_data, v
 	int endX = (int)godot_vector2_get_x(&end);
 	int endY = (int)godot_vector2_get_y(&end);	
 
-	bool has = check_path(x,y,endX,endY);
+	bool has = has_path(x,y,endX,endY);
 
 	godot_variant_new_bool(&ret, has);
 
@@ -258,24 +306,48 @@ godot_variant simple_check_path(godot_object *p_instance, void *p_method_data, v
 	return ret; 
 }
 
-bool check_path(int x, int y, int endX, int endY){
+/*bool check_path(int x, int y, int endX, int endY){
 
 	copy_map(map, fillCopy);
-	return has_path;
+	return has_path(x, y, endX, endY);
 }
-
+*/
 bool has_path(int x, int y, int endX, int endY){
 	
-	if ( x >= 0 && y >= 0 && x < SIZE_X && y < SIZE_Y &&  fillCopy[x][y] == -1){
-		if( x == endX && y == endY){
-			return true;
+	struct StackNode* root = NULL;	
+
+	struct Point start = {x,y};
+	
+	bool visited[SIZE_X][SIZE_Y];
+	for(int xx = 0; xx < SIZE_X; xx++)
+		for(int yy = 0; yy < SIZE_Y; yy++)
+			visited[xx][yy] = false;
+		
+	push(&root, start);
+
+	while(!isEmpty(root)){
+		struct Point curr = pop(&root);
+		int currX = curr.x;
+		int currY = curr.y;
+		if (currX >= 0 && currX < SIZE_X && currY >= 0 && currY < SIZE_Y){
+			if (currX == endX && currY == endY){
+				free(root);
+				return true;
+			}
+			if ( map[currX][currY] == -1 && !visited[currX][currY]){
+				visited[currX][currY] = true;
+				struct Point left = {currX-1, currY};
+				struct Point right = {currX+1, currY};
+				struct Point up = {currX, currY-1};
+				struct Point down = {currX, currY+1};
+				push(&root, left);//left
+				push(&root, right);//right
+				push(&root, up);//up
+				push(&root, down);//down
+			}
 		}
-		fillCopy[x][y] = 0;
-		return has_path(x+1,y, endX, endY);
-		return has_path(x+1,y, endX, endY);
-		return has_path(x+1,y, endX, endY);
-		return has_path(x+1,y, endX, endY);
 	}
+	free(root);
 	return false;
 }
 

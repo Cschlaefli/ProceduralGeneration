@@ -81,7 +81,8 @@ func _find_paths():
 	for dir in dirNames :
 		validEnts[dir].clear()
 		for ent in entrances[dir] :
-#			if _has_path(mainEnt, ent) 
+#			if _has_path(mainEnt, ent) :
+#			print(generator.check_path(map, mainEnt[0], ent[0]))
 			if generator.check_path(map, mainEnt[0], ent[0]):
 				validEnts[dir].append(ent)
 	
@@ -235,11 +236,6 @@ func _has_path(starts, ends):
 				if ends.has(next) :
 					return true
 				if !visited.has(next) && map[next] == -1 :
-#					if next.y +1 < height :
-#						if map[next.x][next.y+1] == -1 :
-#							q.push_front(next)
-#							visited[next] = true
-#					else :
 						q.push_front(next)
 						visited[next] = true
 	

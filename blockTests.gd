@@ -26,9 +26,9 @@ func _ready():
 	
 	var start = Vector2(0,0)
 	
-	for y in 2:
+	for y in 5:
 #		seed(setSeed)
-		for x in 2:
+		for x in 5:
 			var pos = Vector2(x,y)*size
 			var block = _gen_block(3,14, 7,6, pos, 2)
 #_gen_block(8, 40,3,4, pos)

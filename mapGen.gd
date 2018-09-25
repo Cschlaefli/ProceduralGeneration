@@ -26,7 +26,8 @@ var graph = {}
 
 var blockGrid = {}
 var blocksToFill = []
-var setSeed = 3554878158
+var setSeed = 276274291
+
 var randomSeed = false
 
 var totalGenerationAttempts = 0
@@ -96,15 +97,14 @@ func _add_start_block():
 	
 	startBlock.modulate = Color(1.0,.5,1.0)
 	startBlock._draw_map()
-	add_child(startBlock)	
+	add_child(startBlock)
 	
 	graph[startBlock.position] = []
 	
 	for dir in cardinal :
 		if startBlock.validEnts[dir].size() > 0  && dir != "n":
 			_add_block(startBlock, dir)
-	
-	
+
 
 
 func _furthest_block():
@@ -127,8 +127,7 @@ func _furthest_block():
 	
 	print(ret)
 	print(furthest)
-	
-	
+
 
 func _input(event):
 	
@@ -158,14 +157,14 @@ func _input(event):
 #		print ( "Time per block : ", time/blockGrid.size())
 	
 	
-#	if event.is_action_pressed("ui_accept") :
-#		var time  = OS.get_ticks_msec()
-#		if !blocksToFill.empty() :
-#			print("fillingNext")
-#			blocksToFill[0].modulate = Color(1.0,1.0,1.0)
-#			_fill_block(blocksToFill.pop_front())
-#			print("filled")
-#		print( blockGrid.size(), " blocks in : ", OS.get_ticks_msec()-time )
+	if event.is_action_pressed("ui_accept") :
+		var time  = OS.get_ticks_msec()
+		if !blocksToFill.empty() :
+			print("fillingNext")
+			blocksToFill[0].modulate = Color(1.0,1.0,1.0)
+			_fill_block(blocksToFill.pop_front())
+			print("filled")
+		print( blockGrid.size(), " blocks in : ", OS.get_ticks_msec()-time )
 
 func _find_shortest_path(graph, start, end, path=[]):
 	
